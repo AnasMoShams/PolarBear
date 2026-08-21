@@ -1,13 +1,13 @@
 import Navbar from "@/components/layout/Navbar";
-import Hero from "@/sections/hero/Hero";
+import About from "@/sections/about/About";
 
-export default function HomePage() {
+export default function AboutPage() {
   return (
     <>
       <Navbar />
 
       <main>
-        <Hero />
+        <About />
       </main>
     </>
   );
