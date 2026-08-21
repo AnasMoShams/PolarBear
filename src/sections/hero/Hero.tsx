@@ -52,7 +52,7 @@ export default function Hero() {
 
             {/* About */}
             <Link
-              href="#about"
+              href="/about"
               className="inline-flex items-center justify-center rounded-[20px] border border-white px-6 py-3 font-medium text-white transition-all duration-300 hover:bg-white hover:text-black"
             >
               About Me
@@ -60,7 +60,7 @@ export default function Hero() {
 
             {/* Contact */}
             <Link
-              href="#contact"
+              href="/contact"
               className="inline-flex items-center justify-center rounded-[20px] border border-white px-6 py-3 font-medium text-white transition-all duration-300 hover:bg-white hover:text-black"
             >
               Contact Me

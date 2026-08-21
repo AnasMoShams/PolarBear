@@ -1,13 +1,13 @@
 import Navbar from "@/components/layout/Navbar";
-import Hero from "@/sections/hero/Hero";
+import Contact from "@/sections/contact/Contact";
 
-export default function HomePage() {
+export default function ContactPage() {
   return (
     <>
       <Navbar />
 
       <main>
-        <Hero />
+        <Contact />
       </main>
     </>
   );
