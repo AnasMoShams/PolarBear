@@ -1,7 +1,9 @@
 import "./globals.css";
+
 import type { Metadata } from "next";
 
 import Navbar from "@/components/layout/Navbar";
+import { ProjectProvider } from "@/context/ProjectContext";
 
 export const metadata: Metadata = {
   title: "PolarBear",
@@ -16,8 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        {children}
+        <ProjectProvider>
+          <Navbar />
+          {children}
+        </ProjectProvider>
       </body>
     </html>
   );

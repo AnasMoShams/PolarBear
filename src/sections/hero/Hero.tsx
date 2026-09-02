@@ -44,7 +44,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             {/* Projects */}
             <Link
-              href="#projects"
+              href="/projects"
               className="inline-flex items-center justify-center rounded-[20px] bg-[var(--color-primary)] px-6 py-3 font-medium text-black transition-all duration-300 hover:bg-[var(--color-primary-hover)]"
             >
               View My Projects
