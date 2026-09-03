@@ -1,7 +1,9 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { useProjects } from "@/context/ProjectContext";
 
 const categories = [
@@ -19,6 +21,9 @@ export default function AddProjectForm() {
   const { addProject } = useProjects();
 
   const [name, setName] = useState("");
+  const [type, setType] = useState<"professional" | "learning">(
+    "professional",
+  );
   const [category, setCategory] = useState("Data Science");
   const [about, setAbout] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
@@ -28,6 +33,11 @@ export default function AddProjectForm() {
 
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [gallery, setGallery] = useState<string[]>([]);
+
+  const [addCaseStudy, setAddCaseStudy] = useState(false);
+  const [problem, setProblem] = useState("");
+  const [whatIDid, setWhatIDid] = useState("");
+  const [whatCameOfIt, setWhatCameOfIt] = useState("");
 
   // Convert an uploaded image into a permanent Data URL.
   // This allows the image to be saved in localStorage.
@@ -64,11 +74,7 @@ export default function AddProjectForm() {
       return;
     }
 
-    setTechnologies((current) => [
-      ...current,
-      newTechnology,
-    ]);
-
+    setTechnologies((current) => [...current, newTechnology]);
     setTechInput("");
   };
 
@@ -91,11 +97,9 @@ export default function AddProjectForm() {
 
     try {
       const imageDataUrl = await fileToDataUrl(file);
-
       setCoverImage(imageDataUrl);
     } catch (error) {
       console.error("Failed to load cover image:", error);
-
       alert("Failed to load cover image.");
     }
 
@@ -107,7 +111,6 @@ export default function AddProjectForm() {
     event: ChangeEvent<HTMLInputElement>,
   ) => {
     const files = Array.from(event.target.files ?? []);
-
     const availableSlots = 10 - gallery.length;
 
     if (availableSlots <= 0) {
@@ -128,7 +131,6 @@ export default function AddProjectForm() {
       ]);
     } catch (error) {
       console.error("Failed to load gallery images:", error);
-
       alert("Failed to load one or more gallery images.");
     }
 
@@ -136,9 +138,7 @@ export default function AddProjectForm() {
   };
 
   // Remove gallery image
-  const removeGalleryImage = (
-    indexToRemove: number,
-  ) => {
+  const removeGalleryImage = (indexToRemove: number) => {
     setGallery((current) =>
       current.filter(
         (_, index) => index !== indexToRemove,
@@ -172,8 +172,9 @@ export default function AddProjectForm() {
       return;
     }
 
-    addProject({
+    const projectData = {
       name: name.trim(),
+      type,
       category,
       tags: [],
       description: about.trim(),
@@ -181,10 +182,18 @@ export default function AddProjectForm() {
       coverImage,
       images: gallery,
       githubUrl: githubUrl.trim(),
-    });
+      ...(addCaseStudy
+        ? {
+            problem: problem.trim(),
+            whatIDid: whatIDid.trim(),
+            whatCameOfIt: whatCameOfIt.trim(),
+          }
+        : {}),
+    };
+
+    addProject(projectData);
 
     alert("Project added successfully!");
-
     router.push("/projects");
   };
 
@@ -236,33 +245,39 @@ export default function AddProjectForm() {
           />
         </div>
 
-        {/* Category */}
+        {/* Project Type */}
         <div className="mb-6">
-          <label
-            htmlFor="project-category"
-            className="mb-2 block text-sm font-medium text-gray-300"
-          >
-            Track / Category
+          <label className="mb-3 block text-sm font-medium text-gray-300">
+            Project Type
           </label>
 
-          <select
-            id="project-category"
-            value={category}
-            onChange={(event) =>
-              setCategory(event.target.value)
-            }
-            className="w-full rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-white outline-none transition-colors focus:border-[var(--color-primary)]"
-          >
-            {categories.map((item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setType("professional")}
+              className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition-all ${
+                type === "professional"
+                  ? "border-[var(--color-primary)] bg-sky-400/10 text-[var(--color-primary)]"
+                  : "border-[var(--color-border)] bg-[var(--color-background)] text-gray-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              Professional
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setType("learning")}
+              className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition-all ${
+                type === "learning"
+                  ? "border-[var(--color-primary)] bg-sky-400/10 text-[var(--color-primary)]"
+                  : "border-[var(--color-border)] bg-[var(--color-background)] text-gray-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              Learning
+            </button>
+          </div>
         </div>
+
 
         {/* About */}
         <div>
@@ -284,6 +299,100 @@ export default function AddProjectForm() {
             className="w-full resize-none rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[var(--color-primary)]"
           />
         </div>
+      </section>
+
+      {/* Case Study */}
+      <section className="mb-10">
+        <div className="rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] p-5">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={addCaseStudy}
+              onChange={(event) =>
+                setAddCaseStudy(event.target.checked)
+              }
+              className="mt-1 h-4 w-4 accent-sky-400"
+            />
+
+            <div>
+              <span className="block font-medium text-white">
+                Add Case Study Details
+              </span>
+
+              <span className="mt-1 block text-sm text-[var(--color-text-secondary)]">
+                Add the problem, your contribution, and
+                the outcome of the project.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        {addCaseStudy && (
+          <div className="mt-5 space-y-6">
+            {/* Problem */}
+            <div>
+              <label
+                htmlFor="project-problem"
+                className="mb-2 block text-sm font-medium text-gray-300"
+              >
+                Problem
+              </label>
+
+              <textarea
+                id="project-problem"
+                value={problem}
+                onChange={(event) =>
+                  setProblem(event.target.value)
+                }
+                rows={5}
+                placeholder="What problem, challenge, or question were you trying to solve?"
+                className="w-full resize-none rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[var(--color-primary)]"
+              />
+            </div>
+
+            {/* What I Did */}
+            <div>
+              <label
+                htmlFor="project-what-i-did"
+                className="mb-2 block text-sm font-medium text-gray-300"
+              >
+                What I Did
+              </label>
+
+              <textarea
+                id="project-what-i-did"
+                value={whatIDid}
+                onChange={(event) =>
+                  setWhatIDid(event.target.value)
+                }
+                rows={5}
+                placeholder="What did you do to solve the problem?"
+                className="w-full resize-none rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[var(--color-primary)]"
+              />
+            </div>
+
+            {/* What Came of It */}
+            <div>
+              <label
+                htmlFor="project-what-came-of-it"
+                className="mb-2 block text-sm font-medium text-gray-300"
+              >
+                What Came of It
+              </label>
+
+              <textarea
+                id="project-what-came-of-it"
+                value={whatCameOfIt}
+                onChange={(event) =>
+                  setWhatCameOfIt(event.target.value)
+                }
+                rows={5}
+                placeholder="What was the result, insight, or outcome?"
+                className="w-full resize-none rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[var(--color-primary)]"
+              />
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Technologies */}

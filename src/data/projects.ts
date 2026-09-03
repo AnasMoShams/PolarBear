@@ -1,6 +1,7 @@
 export type Project = {
   id: string;
   name: string;
+  type: "professional" | "learning";
   category: string;
   tags: string[];
   description: string;
@@ -8,12 +9,18 @@ export type Project = {
   coverImage: string;
   images: string[];
   githubUrl: string;
+
+  problem?: string;
+  whatIDid?: string;
+  whatCameOfIt?: string;
 };
 
+
 export const projects: Project[] = [
-  {
+{
     id: "windows-activity-monitor",
     name: "Windows Activity Monitor",
+    type: "professional",
     category: "Software Engineering",
     tags: ["System Monitoring"],
     description:
@@ -37,6 +44,7 @@ export const projects: Project[] = [
   {
     id: "cpu-scheduling-simulator",
     name: "CPU Scheduling Simulator",
+    type: "professional",
     category: "Operating Systems",
     tags: ["System Programming"],
     description:

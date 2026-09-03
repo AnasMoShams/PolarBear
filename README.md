@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PolarBear 🐻‍❄️
+
+PolarBear is my personal portfolio website, built with Next.js,
+TypeScript, and Tailwind CSS to showcase my projects, technical
+skills, academic journey, and professional interests.
+
+The project is also being developed as part of my graduation and
+training experience.
+
+## Features
+
+- Responsive personal portfolio
+- Hero section
+- About Me page
+- Contact page
+- Projects showcase
+- Project categories
+- Project search
+- Individual project detail pages
+- Project galleries
+- Technologies Used section
+- GitHub source code links
+- Responsive navigation
+- Mobile menu
+- Add Project interface
+- Cover image selection
+- Optional project gallery
+- Technology management
+
+## Tech Stack
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Simple Icons
+- Git
+- GitHub
+
+
+## Requirements
+
+Before running the project, make sure you have:
+
+- Node.js 20.x or later
+- npm 10.x or later
+- Git
+- A modern web browser
+
+You can check your installed versions using:
+node -v
+npm -v
+git --version
+
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the repository
 
-```bash
+git clone https://github.com/AnasMoShams/PolarBear.git
+
+### 2. Navigate to the project
+
+cd PolarBear
+
+### 3. Install dependencies
+
+npm install
+
+### 4. Start the development server
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Build the project:
 
-## Learn More
+npm run build
 
-To learn more about Next.js, take a look at the following resources:
+Start the production server:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm run start
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+src/
+├── app/          # Application routes and pages
+├── components/   # Reusable UI components
+├── sections/     # Main website sections
+├── constants/    # Shared constants
+└── data/         # Project data
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+public/
+└── images/       # Website and project images
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Future Development
+
+Planned improvements include:
+
+- Admin authentication
+- Backend integration
+- Database integration
+- Persistent project management
+- Cloud image storage
+- Add/Edit/Delete project management
+- Production deployment

@@ -13,6 +13,7 @@ import { projects as initialProjects } from "@/data/projects";
 export type Project = {
   id: string;
   name: string;
+  type: "professional" | "learning";
   category: string;
   tags: string[];
   description: string;
@@ -20,6 +21,9 @@ export type Project = {
   coverImage: string;
   images: string[];
   githubUrl: string;
+  problem?: string;
+  whatIDid?: string;
+  whatCameOfIt?: string;
 };
 
 type ProjectContextType = {
