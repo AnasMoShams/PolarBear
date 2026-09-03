@@ -1,4 +1,4 @@
-# PolarBear 🐻‍❄️
+# PolarBear 
 
 PolarBear is my personal portfolio website, built with Next.js,
 TypeScript, and Tailwind CSS to showcase my projects, technical
