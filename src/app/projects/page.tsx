@@ -61,8 +61,15 @@ export default function ProjectsPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[var(--color-background)] px-6 py-16 md:px-10 lg:px-16">
-      <section className="mx-auto max-w-7xl">
+    <main className="relative min-h-screen px-6 py-16 md:px-10 lg:px-16">
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url('/images/hero.jpg')" }}
+      />
+
+      <div className="fixed inset-0 -z-10 bg-[var(--color-background)]/85" />
+
+      <section className="relative mx-auto max-w-7xl">
 
         {/* Header */}
         <div className="mb-12 max-w-2xl">

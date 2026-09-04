@@ -1,25 +1,30 @@
-import AddProjectForm from '../../../components/projects/AddProjectForm';
-// Note: If you are using @ in your project paths, you can change the first line to:
-// import AddProjectForm from '@/components/projects/AddProject';
+import AddProjectForm from "@/components/projects/AddProjectForm";
 
 export default function AddProjectPage() {
   return (
-    <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8 bg-[#030303]">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Button to go back to the projects page */}
-        <div className="mb-8 max-w-3xl mx-auto">
-          <a 
-            href="/projects" 
-            className="text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-2 text-sm font-medium"
+    <main className="relative min-h-screen px-4 py-24 sm:px-6 lg:px-8">
+      {/* Background */}
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url('/images/hero.jpg')" }}
+      />
+
+      {/* Dark overlay */}
+      <div className="fixed inset-0 -z-10 bg-[var(--color-background)]/85" />
+
+      <div className="relative mx-auto max-w-7xl">
+        {/* Back button */}
+        <div className="mx-auto mb-8 max-w-3xl">
+          <a
+            href="/projects"
+            className="flex items-center gap-2 text-sm font-medium text-sky-400 transition-colors hover:text-sky-300"
           >
             <span>&larr;</span> Back to Projects
           </a>
         </div>
 
-        {/* Display the add project component we created */}
+        {/* Add Project Form */}
         <AddProjectForm />
-        
       </div>
     </main>
   );
