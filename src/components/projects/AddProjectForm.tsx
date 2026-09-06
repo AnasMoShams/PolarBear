@@ -277,6 +277,29 @@ export default function AddProjectForm() {
             </button>
           </div>
         </div>
+        {/* Project Category */}
+        <div className="mb-6">
+          <label className="mb-3 block text-sm font-medium text-gray-300">
+            Project Category
+          </label>
+
+          <div className="flex flex-wrap gap-3">
+            {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setCategory(item)}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+              category === item
+                ? "bg-[var(--color-primary)] text-[#05080d] shadow-[0_0_15px_rgba(135,206,235,0.3)]"
+                : "border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-white"
+              }`}
+            >
+             {item}
+            </button>
+            ))}
+          </div>
+        </div>
 
 
         {/* About */}
