@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 
-import { projects as initialProjects } from "@/data/projects";
+import { supabase } from "@/utils/supabase/client";
 
 export type Project = {
   id: string;
@@ -36,57 +36,57 @@ const ProjectContext = createContext<ProjectContextType | undefined>(
   undefined
 );
 
-const STORAGE_KEY = "polarbear-projects";
-
 export const ProjectProvider = ({
   children,
 }: {
   children: ReactNode;
 }) => {
-  const [projectsList, setProjectsList] =
-    useState<Project[]>(initialProjects);
-
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   /*
-   * Load projects from localStorage
+   * Load projects from Supabase
    */
   useEffect(() => {
-    try {
-      const savedProjects = localStorage.getItem(STORAGE_KEY);
+    const loadProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
 
-      if (savedProjects) {
-        const parsedProjects: Project[] = JSON.parse(savedProjects);
-
-        if (Array.isArray(parsedProjects)) {
-          setProjectsList(parsedProjects);
-        }
+      if (error) {
+        console.error("Failed to load projects:", error);
+        setIsLoaded(true);
+        return;
       }
-    } catch (error) {
-      console.error("Failed to load projects:", error);
-    } finally {
+
+      const mappedProjects: Project[] = (data ?? []).map((project) => ({
+        id: project.slug,
+        name: project.title,
+        type: project.type,
+        category: project.category,
+        tags: project.tags ?? [],
+        description: project.description,
+        technologies: project.technologies ?? [],
+        coverImage: project.cover_image ?? "",
+        images: project.gallery_images ?? [],
+        githubUrl: project.github_url ?? "",
+        problem: project.problem ?? undefined,
+        whatIDid: project.what_i_did ?? undefined,
+        whatCameOfIt: project.what_came_of_it ?? undefined,
+      }));
+
+      setProjectsList(mappedProjects);
       setIsLoaded(true);
-    }
+    };
+
+    loadProjects();
   }, []);
 
   /*
-   * Save projects whenever the list changes
-   */
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(projectsList)
-      );
-    } catch (error) {
-      console.error("Failed to save projects:", error);
-    }
-  }, [projectsList, isLoaded]);
-
-  /*
    * Add new project
+   * Temporary: still local until we connect it to Supabase.
    */
   const addProject = (
     newProjectData: Omit<Project, "id">
@@ -96,47 +96,20 @@ export const ProjectProvider = ({
       ...newProjectData,
     };
 
-    setProjectsList((currentProjects) => {
-      const updatedProjects = [
-        newProject,
-        ...currentProjects,
-      ];
-
-      // Save immediately
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(updatedProjects)
-        );
-      } catch (error) {
-        console.error("Failed to save new project:", error);
-      }
-
-      return updatedProjects;
-    });
+    setProjectsList((currentProjects) => [
+      newProject,
+      ...currentProjects,
+    ]);
   };
 
   /*
    * Remove project
+   * Temporary: still local until we connect it to Supabase.
    */
   const removeProject = (id: string) => {
-    setProjectsList((currentProjects) => {
-      const updatedProjects = currentProjects.filter(
-        (project) => project.id !== id
-      );
-
-      // Save immediately after deletion
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(updatedProjects)
-        );
-      } catch (error) {
-        console.error("Failed to save deleted project:", error);
-      }
-
-      return updatedProjects;
-    });
+    setProjectsList((currentProjects) =>
+      currentProjects.filter((project) => project.id !== id)
+    );
   };
 
   return (
