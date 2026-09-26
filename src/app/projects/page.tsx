@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { useAuth } from "@/context/AuthContext";
 import ProjectCard from "@/components/projects/ProjectCard";
 import { useProjects } from "@/context/ProjectContext";
 
 export default function ProjectsPage() {
   const { projects } = useProjects();
-
-  const isAdmin = true;
+  const { isAdmin } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -70,7 +70,6 @@ export default function ProjectsPage() {
       <div className="fixed inset-0 -z-10 bg-[var(--color-background)]/85" />
 
       <section className="relative mx-auto max-w-7xl">
-
         {/* Header */}
         <div className="mb-12 max-w-2xl">
           <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-[var(--color-primary)]">
@@ -90,7 +89,6 @@ export default function ProjectsPage() {
 
         {/* Filters + Search + Add Project */}
         <div className="mb-10 flex flex-col gap-6">
-
           {/* Project Type Filter */}
           <div>
             <p className="mb-3 text-sm font-medium text-gray-300">
@@ -127,7 +125,6 @@ export default function ProjectsPage() {
 
           {/* Category + Search + Add Project */}
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-
             {/* Categories */}
             <div>
               <p className="mb-3 text-sm font-medium text-gray-300">
@@ -153,7 +150,6 @@ export default function ProjectsPage() {
 
             {/* Search + Add Project */}
             <div className="flex w-full items-center gap-3 md:w-auto">
-
               {/* Search */}
               <div className="relative w-full md:w-72">
                 <input
@@ -179,7 +175,7 @@ export default function ProjectsPage() {
                 </svg>
               </div>
 
-              {/* Add Project */}
+              {/* Add Project - Admin Only */}
               {isAdmin && (
                 <Link
                   href="/projects/add"

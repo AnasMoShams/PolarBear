@@ -1,13 +1,23 @@
 import { redirect } from "next/navigation";
+
 import AddProjectForm from "@/components/projects/AddProjectForm";
+
 import { createClient } from "@/utils/supabase/server";
 
 export default async function AddProjectPage() {
   const supabase = await createClient();
+
   const { data: claimsData } = await supabase.auth.getClaims();
 
   if (!claimsData?.claims) {
     redirect("/login?next=/projects/add");
+  }
+
+  const userId = claimsData.claims.sub;
+  const adminUserId = process.env.NEXT_PUBLIC_ADMIN_USER_ID;
+
+  if (!adminUserId || userId !== adminUserId) {
+    redirect("/projects");
   }
 
   return (

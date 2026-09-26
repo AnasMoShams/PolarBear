@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { useAuth } from "@/context/AuthContext";
 import type { Project } from "@/data/projects";
 import { useProjects } from "@/context/ProjectContext";
 
@@ -12,6 +13,7 @@ type ProjectCardProps = {
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const { removeProject } = useProjects();
+  const { isAdmin } = useAuth();
 
   const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -29,33 +31,34 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   return (
     <article className="group relative h-full overflow-hidden rounded-[20px] border border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-[var(--color-primary)] hover:shadow-[0_0_30px_rgba(135,206,235,0.12)]">
 
-      {/* Delete Button */}
-      <button
-        type="button"
-        onClick={handleDelete}
-        aria-label={`Delete ${project.name}`}
-        className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-red-400/20 bg-black/70 text-red-400 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-red-400/40 hover:bg-red-500 hover:text-white"
-      >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Delete Button - Admin Only */}
+      {isAdmin && (
+        <button
+          type="button"
+          onClick={handleDelete}
+          aria-label={`Delete ${project.name}`}
+          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-red-400/20 bg-black/70 text-red-400 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-red-400/40 hover:bg-red-500 hover:text-white"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h14"
-          />
-        </svg>
-      </button>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h14"
+            />
+          </svg>
+        </button>
+      )}
 
       <Link
         href={`/projects/${project.id}`}
         className="block h-full"
       >
-
         {/* Cover Image */}
         <div className="relative aspect-video overflow-hidden bg-[var(--color-background)]">
           <Image
@@ -76,7 +79,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Content */}
         <div className="flex flex-col p-5">
-
           <h3 className="text-xl font-semibold text-white transition-colors duration-300 group-hover:text-[var(--color-primary)]">
             {project.name}
           </h3>
@@ -113,7 +115,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               →
             </span>
           </div>
-
         </div>
       </Link>
     </article>
