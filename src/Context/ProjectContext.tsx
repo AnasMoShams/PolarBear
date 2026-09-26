@@ -28,8 +28,9 @@ export type Project = {
 
 type ProjectContextType = {
   projects: Project[];
-  addProject: (project: Omit<Project, "id">) => void;
-  removeProject: (id: string) => void;
+  addProject: (project: Omit<Project, "id">) => Promise<void>;
+  removeProject: (id: string) => Promise<void>;
+  isLoading: boolean;
 };
 
 const ProjectContext = createContext<ProjectContextType | undefined>(
@@ -42,59 +43,136 @@ export const ProjectProvider = ({
   children: ReactNode;
 }) => {
   const [projectsList, setProjectsList] = useState<Project[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   /*
-   * Load projects from Supabase
+   * Convert Supabase project → Project used by the UI
+   */
+  const mapSupabaseProject = (project: any): Project => ({
+    id: project.slug,
+    name: project.title,
+    type: project.type,
+    category: project.category,
+    tags: project.tags ?? [],
+    description: project.description ?? "",
+    technologies: project.technologies ?? [],
+    coverImage: project.cover_image ?? "",
+    images: project.gallery_images ?? [],
+    githubUrl: project.github_url ?? "",
+    problem: project.problem ?? undefined,
+    whatIDid: project.what_i_did ?? undefined,
+    whatCameOfIt: project.what_came_of_it ?? undefined,
+  });
+
+  /*
+   * Load published projects from Supabase
    */
   useEffect(() => {
     const loadProjects = async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("is_published", true)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Failed to load projects:", error);
-        setIsLoaded(true);
-        return;
+        if (error) {
+          console.error("Failed to load projects:", error);
+          return;
+        }
+
+        const mappedProjects: Project[] = (data ?? []).map(
+          mapSupabaseProject
+        );
+
+        setProjectsList(mappedProjects);
+      } finally {
+        setIsLoading(false);
       }
-
-      const mappedProjects: Project[] = (data ?? []).map((project) => ({
-        id: project.slug,
-        name: project.title,
-        type: project.type,
-        category: project.category,
-        tags: project.tags ?? [],
-        description: project.description,
-        technologies: project.technologies ?? [],
-        coverImage: project.cover_image ?? "",
-        images: project.gallery_images ?? [],
-        githubUrl: project.github_url ?? "",
-        problem: project.problem ?? undefined,
-        whatIDid: project.what_i_did ?? undefined,
-        whatCameOfIt: project.what_came_of_it ?? undefined,
-      }));
-
-      setProjectsList(mappedProjects);
-      setIsLoaded(true);
     };
 
     loadProjects();
   }, []);
 
   /*
-   * Add new project
-   * Temporary: still local until we connect it to Supabase.
+   * Create a URL-friendly slug
    */
-  const addProject = (
+  const createSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
+  const createUniqueSlug = async (name: string) => {
+  const baseSlug = createSlug(name);
+
+  let slug = baseSlug;
+  let counter = 2;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("slug")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${counter}`;
+    counter += 1;
+  }
+};
+
+  /*
+   * Add new project to Supabase
+   */
+  const addProject = async (
     newProjectData: Omit<Project, "id">
   ) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      ...newProjectData,
-    };
+    const slug = await createUniqueSlug(newProjectData.name);
+
+    const { data, error } = await supabase
+      .from("projects")
+      .insert({
+        title: newProjectData.name,
+        slug,
+
+        type: newProjectData.type,
+        category: newProjectData.category,
+        tags: newProjectData.tags ?? [],
+
+        description: newProjectData.description,
+
+        problem: newProjectData.problem ?? null,
+        what_i_did: newProjectData.whatIDid ?? null,
+        what_came_of_it: newProjectData.whatCameOfIt ?? null,
+
+        technologies: newProjectData.technologies ?? [],
+
+        github_url: newProjectData.githubUrl ?? "",
+
+        cover_image: newProjectData.coverImage ?? "",
+        gallery_images: newProjectData.images ?? [],
+
+        is_published: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to add project:", error);
+      throw error;
+    }
+
+    const newProject = mapSupabaseProject(data);
 
     setProjectsList((currentProjects) => [
       newProject,
@@ -103,10 +181,22 @@ export const ProjectProvider = ({
   };
 
   /*
-   * Remove project
-   * Temporary: still local until we connect it to Supabase.
+   * Delete project from Supabase
+   *
+   * The UI uses slug as the project id,
+   * so we delete using the slug.
    */
-  const removeProject = (id: string) => {
+  const removeProject = async (id: string) => {
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("slug", id);
+
+    if (error) {
+      console.error("Failed to delete project:", error);
+      throw error;
+    }
+
     setProjectsList((currentProjects) =>
       currentProjects.filter((project) => project.id !== id)
     );
@@ -118,6 +208,7 @@ export const ProjectProvider = ({
         projects: projectsList,
         addProject,
         removeProject,
+        isLoading,
       }}
     >
       {children}

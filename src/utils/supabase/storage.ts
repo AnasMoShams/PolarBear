@@ -10,7 +10,7 @@ export async function uploadProjectImage(
   const { error } = await supabase.storage
     .from("project-images")
     .upload(filePath, file, {
-      upsert: true,
+      upsert: false,
     });
 
   if (error) {

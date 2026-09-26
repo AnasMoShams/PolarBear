@@ -1,9 +1,9 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
-
 import { useRouter } from "next/navigation";
 
+import { uploadProjectImage } from "@/utils/supabase/storage";
 import { useProjects } from "@/context/ProjectContext";
 
 const categories = [
@@ -34,28 +34,13 @@ export default function AddProjectForm() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [gallery, setGallery] = useState<string[]>([]);
 
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+
   const [addCaseStudy, setAddCaseStudy] = useState(false);
   const [problem, setProblem] = useState("");
   const [whatIDid, setWhatIDid] = useState("");
   const [whatCameOfIt, setWhatCameOfIt] = useState("");
-
-  // Convert an uploaded image into a permanent Data URL.
-  // This allows the image to be saved in localStorage.
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-
-      reader.onerror = () => {
-        reject(new Error("Failed to read image"));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  };
 
   // Add technology when pressing Enter
   const handleAddTechnology = (
@@ -88,30 +73,28 @@ export default function AddProjectForm() {
   };
 
   // Cover image
-  const handleCoverImageChange = async (
+  const handleCoverImageChange = (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
-    try {
-      const imageDataUrl = await fileToDataUrl(file);
-      setCoverImage(imageDataUrl);
-    } catch (error) {
-      console.error("Failed to load cover image:", error);
-      alert("Failed to load cover image.");
-    }
+    setCoverFile(file);
+
+    // Object URL is only used for preview.
+    const previewUrl = URL.createObjectURL(file);
+    setCoverImage(previewUrl);
 
     event.target.value = "";
   };
 
   // Gallery images
-  const handleGalleryChange = async (
+  const handleGalleryChange = (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
     const files = Array.from(event.target.files ?? []);
-    const availableSlots = 10 - gallery.length;
+    const availableSlots = 10 - galleryFiles.length;
 
     if (availableSlots <= 0) {
       event.target.value = "";
@@ -120,26 +103,38 @@ export default function AddProjectForm() {
 
     const filesToAdd = files.slice(0, availableSlots);
 
-    try {
-      const newImageUrls = await Promise.all(
-        filesToAdd.map((file) => fileToDataUrl(file)),
-      );
+    const newPreviewUrls = filesToAdd.map((file) =>
+      URL.createObjectURL(file),
+    );
 
-      setGallery((current) => [
-        ...current,
-        ...newImageUrls,
-      ]);
-    } catch (error) {
-      console.error("Failed to load gallery images:", error);
-      alert("Failed to load one or more gallery images.");
-    }
+    setGallery((current) => [
+      ...current,
+      ...newPreviewUrls,
+    ]);
+
+    setGalleryFiles((current) => [
+      ...current,
+      ...filesToAdd,
+    ]);
 
     event.target.value = "";
   };
 
   // Remove gallery image
   const removeGalleryImage = (indexToRemove: number) => {
+    const previewUrl = gallery[indexToRemove];
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     setGallery((current) =>
+      current.filter(
+        (_, index) => index !== indexToRemove,
+      ),
+    );
+
+    setGalleryFiles((current) =>
       current.filter(
         (_, index) => index !== indexToRemove,
       ),
@@ -148,11 +143,16 @@ export default function AddProjectForm() {
 
   // Remove cover image
   const removeCoverImage = () => {
+    if (coverImage) {
+      URL.revokeObjectURL(coverImage);
+    }
+
     setCoverImage(null);
+    setCoverFile(null);
   };
 
   // Submit project
-  const handleSubmit = (
+  const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
@@ -162,7 +162,7 @@ export default function AddProjectForm() {
       return;
     }
 
-    if (!coverImage) {
+    if (!coverFile) {
       alert("Please select a cover image.");
       return;
     }
@@ -172,29 +172,67 @@ export default function AddProjectForm() {
       return;
     }
 
-    const projectData = {
-      name: name.trim(),
-      type,
-      category,
-      tags: [],
-      description: about.trim(),
-      technologies,
-      coverImage,
-      images: gallery,
-      githubUrl: githubUrl.trim(),
-      ...(addCaseStudy
-        ? {
-            problem: problem.trim(),
-            whatIDid: whatIDid.trim(),
-            whatCameOfIt: whatCameOfIt.trim(),
-          }
-        : {}),
-    };
+    try {
+      // Create a safe folder name for Supabase Storage.
+      const slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
-    addProject(projectData);
+      // Upload cover image
+      const coverFileName = `${crypto.randomUUID()}-${coverFile.name}`;
 
-    alert("Project added successfully!");
-    router.push("/projects");
+      const coverUrl = await uploadProjectImage(
+        coverFile,
+        slug,
+        coverFileName,
+      );
+
+      // Upload gallery images
+      const galleryUrls = await Promise.all(
+        galleryFiles.map((file) =>
+          uploadProjectImage(
+            file,
+            slug,
+            `${crypto.randomUUID()}-${file.name}`,
+          ),
+        ),
+      );
+
+      const projectData = {
+        name: name.trim(),
+        type,
+        category,
+        tags: [],
+        description: about.trim(),
+        technologies,
+        coverImage: coverUrl,
+        images: galleryUrls,
+        githubUrl: githubUrl.trim(),
+        ...(addCaseStudy
+          ? {
+              problem: problem.trim(),
+              whatIDid: whatIDid.trim(),
+              whatCameOfIt: whatCameOfIt.trim(),
+            }
+          : {}),
+      };
+
+      await addProject(projectData);
+
+      alert("Project added successfully!");
+      router.push("/projects");
+    } catch (error) {
+      console.error("Failed to add project:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to add project.";
+
+      alert(`Failed to add project:\n${message}`);
+    }
   };
 
   return (
@@ -277,6 +315,7 @@ export default function AddProjectForm() {
             </button>
           </div>
         </div>
+
         {/* Project Category */}
         <div className="mb-6">
           <label className="mb-3 block text-sm font-medium text-gray-300">
@@ -285,22 +324,21 @@ export default function AddProjectForm() {
 
           <div className="flex flex-wrap gap-3">
             {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setCategory(item)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
-              category === item
-                ? "bg-[var(--color-primary)] text-[#05080d] shadow-[0_0_15px_rgba(135,206,235,0.3)]"
-                : "border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-white"
-              }`}
-            >
-             {item}
-            </button>
+              <button
+                key={item}
+                type="button"
+                onClick={() => setCategory(item)}
+                className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                  category === item
+                    ? "bg-[var(--color-primary)] text-[#05080d] shadow-[0_0_15px_rgba(135,206,235,0.3)]"
+                    : "border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
             ))}
           </div>
         </div>
-
 
         {/* About */}
         <div>
@@ -428,7 +466,6 @@ export default function AddProjectForm() {
           Type a technology and press Enter to add it.
         </p>
 
-        {/* Technology Tags */}
         {technologies.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
             {technologies.map((technology) => (

@@ -17,9 +17,19 @@ export default function ProjectDetailsPage({
 }: ProjectDetailsPageProps) {
   const { id } = use(params);
 
-  const { projects } = useProjects();
+  const { projects, isLoading } = useProjects();
 
   const project = projects.find((p) => p.id === id);
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-[var(--color-background)] px-6 py-16">
+        <p className="text-[var(--color-text-secondary)]">
+          Loading project...
+        </p>
+      </main>
+    );
+  }
 
   if (!project) {
     notFound();
