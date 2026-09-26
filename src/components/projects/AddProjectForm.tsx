@@ -1,10 +1,14 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { uploadProjectImage } from "@/utils/supabase/storage";
-import { useProjects } from "@/context/ProjectContext";
+import {
+  useProjects,
+  type Project,
+} from "@/context/ProjectContext";
+import { useAuth } from "@/context/AuthContext";
 
 const categories = [
   "Data Analysis",
@@ -16,14 +20,22 @@ const categories = [
   "Other",
 ];
 
-export default function AddProjectForm() {
+type AddProjectFormProps = {
+  project?: Project;
+};
+
+export default function AddProjectForm({
+  project,
+}: AddProjectFormProps) {
   const router = useRouter();
-  const { addProject } = useProjects();
+
+  const { addProject, updateProject } = useProjects();
+  const { isAdmin, isLoading } = useAuth();
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<"professional" | "learning">(
-    "professional",
-  );
+  const [type, setType] = useState<
+    "professional" | "learning"
+  >("professional");
   const [category, setCategory] = useState("Data Science");
   const [about, setAbout] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
@@ -31,7 +43,9 @@ export default function AddProjectForm() {
   const [techInput, setTechInput] = useState("");
   const [technologies, setTechnologies] = useState<string[]>([]);
 
-  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverImage, setCoverImage] = useState<string | null>(
+    null
+  );
   const [gallery, setGallery] = useState<string[]>([]);
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -42,9 +56,37 @@ export default function AddProjectForm() {
   const [whatIDid, setWhatIDid] = useState("");
   const [whatCameOfIt, setWhatCameOfIt] = useState("");
 
+  /*
+   * Load existing project data when editing
+   */
+  useEffect(() => {
+    if (!project) return;
+
+    setName(project.name);
+    setType(project.type);
+    setCategory(project.category);
+    setAbout(project.description);
+    setGithubUrl(project.githubUrl);
+
+    setTechnologies(project.technologies);
+
+    setCoverImage(project.coverImage);
+    setGallery(project.images);
+
+    const hasCaseStudy =
+      !!project.problem ||
+      !!project.whatIDid ||
+      !!project.whatCameOfIt;
+
+    setAddCaseStudy(hasCaseStudy);
+    setProblem(project.problem ?? "");
+    setWhatIDid(project.whatIDid ?? "");
+    setWhatCameOfIt(project.whatCameOfIt ?? "");
+  }, [project]);
+
   // Add technology when pressing Enter
   const handleAddTechnology = (
-    event: React.KeyboardEvent<HTMLInputElement>,
+    event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key !== "Enter") return;
 
@@ -59,22 +101,29 @@ export default function AddProjectForm() {
       return;
     }
 
-    setTechnologies((current) => [...current, newTechnology]);
+    setTechnologies((current) => [
+      ...current,
+      newTechnology,
+    ]);
+
     setTechInput("");
   };
 
   // Remove technology
-  const removeTechnology = (technologyToRemove: string) => {
+  const removeTechnology = (
+    technologyToRemove: string
+  ) => {
     setTechnologies((current) =>
       current.filter(
-        (technology) => technology !== technologyToRemove,
-      ),
+        (technology) =>
+          technology !== technologyToRemove
+      )
     );
   };
 
   // Cover image
   const handleCoverImageChange = (
-    event: ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
 
@@ -91,20 +140,26 @@ export default function AddProjectForm() {
 
   // Gallery images
   const handleGalleryChange = (
-    event: ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>
   ) => {
-    const files = Array.from(event.target.files ?? []);
-    const availableSlots = 10 - galleryFiles.length;
+    const files = Array.from(
+      event.target.files ?? []
+    );
+
+    const availableSlots = 10 - gallery.length;
 
     if (availableSlots <= 0) {
       event.target.value = "";
       return;
     }
 
-    const filesToAdd = files.slice(0, availableSlots);
+    const filesToAdd = files.slice(
+      0,
+      availableSlots
+    );
 
     const newPreviewUrls = filesToAdd.map((file) =>
-      URL.createObjectURL(file),
+      URL.createObjectURL(file)
     );
 
     setGallery((current) => [
@@ -121,29 +176,47 @@ export default function AddProjectForm() {
   };
 
   // Remove gallery image
-  const removeGalleryImage = (indexToRemove: number) => {
+  const removeGalleryImage = (
+    indexToRemove: number
+  ) => {
     const previewUrl = gallery[indexToRemove];
 
-    if (previewUrl) {
+    if (previewUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
 
     setGallery((current) =>
       current.filter(
-        (_, index) => index !== indexToRemove,
-      ),
+        (_, index) =>
+          index !== indexToRemove
+      )
     );
 
-    setGalleryFiles((current) =>
-      current.filter(
-        (_, index) => index !== indexToRemove,
-      ),
-    );
+    /*
+     * galleryFiles contains only newly selected files.
+     * Existing Supabase URLs are not stored in galleryFiles.
+     */
+    if (previewUrl?.startsWith("blob:")) {
+      const newFileIndex = gallery
+        .slice(0, indexToRemove)
+        .filter((image) =>
+          image.startsWith("blob:")
+        ).length;
+
+      setGalleryFiles((current) =>
+        current.filter(
+          (_, index) =>
+            index !== newFileIndex
+        )
+      );
+    }
   };
 
   // Remove cover image
   const removeCoverImage = () => {
-    if (coverImage) {
+    if (
+      coverImage?.startsWith("blob:")
+    ) {
       URL.revokeObjectURL(coverImage);
     }
 
@@ -153,7 +226,7 @@ export default function AddProjectForm() {
 
   // Submit project
   const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>,
+    event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
@@ -162,7 +235,7 @@ export default function AddProjectForm() {
       return;
     }
 
-    if (!coverFile) {
+    if (!coverFile && !coverImage) {
       alert("Please select a cover image.");
       return;
     }
@@ -180,25 +253,48 @@ export default function AddProjectForm() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
-      // Upload cover image
-      const coverFileName = `${crypto.randomUUID()}-${coverFile.name}`;
+      /*
+       * Upload cover image only if a new file was selected.
+       * Otherwise keep the existing image URL.
+       */
+      let coverUrl = coverImage ?? "";
 
-      const coverUrl = await uploadProjectImage(
-        coverFile,
-        slug,
-        coverFileName,
-      );
+      if (coverFile) {
+        const coverFileName = `${crypto.randomUUID()}-${coverFile.name}`;
 
-      // Upload gallery images
-      const galleryUrls = await Promise.all(
+        coverUrl = await uploadProjectImage(
+          coverFile,
+          slug,
+          coverFileName
+        );
+      }
+
+      /*
+       * Upload only newly selected gallery files.
+       */
+      const newGalleryUrls = await Promise.all(
         galleryFiles.map((file) =>
           uploadProjectImage(
             file,
             slug,
-            `${crypto.randomUUID()}-${file.name}`,
-          ),
-        ),
+            `${crypto.randomUUID()}-${file.name}`
+          )
+        )
       );
+
+      /*
+       * Keep existing Supabase URLs and add
+       * newly uploaded gallery images.
+       */
+      const existingGalleryUrls =
+        gallery.filter(
+          (image) => !image.startsWith("blob:")
+        );
+
+      const galleryUrls = [
+        ...existingGalleryUrls,
+        ...newGalleryUrls,
+      ];
 
       const projectData = {
         name: name.trim(),
@@ -210,30 +306,53 @@ export default function AddProjectForm() {
         coverImage: coverUrl,
         images: galleryUrls,
         githubUrl: githubUrl.trim(),
+
         ...(addCaseStudy
           ? {
               problem: problem.trim(),
               whatIDid: whatIDid.trim(),
-              whatCameOfIt: whatCameOfIt.trim(),
+              whatCameOfIt:
+                whatCameOfIt.trim(),
             }
           : {}),
       };
 
-      await addProject(projectData);
+      if (project) {
+        await updateProject(
+          project.id,
+          projectData
+        );
 
-      alert("Project added successfully!");
+        alert("Project updated successfully!");
+      } else {
+        await addProject(projectData);
+
+        alert("Project added successfully!");
+      }
+
       router.push("/projects");
     } catch (error) {
-      console.error("Failed to add project:", error);
+      console.error(
+        "Failed to save project:",
+        error
+      );
 
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to add project.";
+          : "Failed to save project.";
 
-      alert(`Failed to add project:\n${message}`);
+      alert(`Failed to save project:\n${message}`);
     }
   };
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <form
@@ -247,12 +366,15 @@ export default function AddProjectForm() {
         </p>
 
         <h1 className="text-3xl font-bold text-white">
-          Add New Project
+          {project
+            ? "Edit Project"
+            : "Add New Project"}
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Add the information and images that describe
-          your project.
+          {project
+            ? "Update the information and images of your project."
+            : "Add the information and images that describe your project."}
         </p>
       </div>
 
@@ -292,7 +414,9 @@ export default function AddProjectForm() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => setType("professional")}
+              onClick={() =>
+                setType("professional")
+              }
               className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition-all ${
                 type === "professional"
                   ? "border-[var(--color-primary)] bg-sky-400/10 text-[var(--color-primary)]"
@@ -304,7 +428,9 @@ export default function AddProjectForm() {
 
             <button
               type="button"
-              onClick={() => setType("learning")}
+              onClick={() =>
+                setType("learning")
+              }
               className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition-all ${
                 type === "learning"
                   ? "border-[var(--color-primary)] bg-sky-400/10 text-[var(--color-primary)]"
@@ -327,7 +453,9 @@ export default function AddProjectForm() {
               <button
                 key={item}
                 type="button"
-                onClick={() => setCategory(item)}
+                onClick={() =>
+                  setCategory(item)
+                }
                 className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
                   category === item
                     ? "bg-[var(--color-primary)] text-[#05080d] shadow-[0_0_15px_rgba(135,206,235,0.3)]"
@@ -370,7 +498,9 @@ export default function AddProjectForm() {
               type="checkbox"
               checked={addCaseStudy}
               onChange={(event) =>
-                setAddCaseStudy(event.target.checked)
+                setAddCaseStudy(
+                  event.target.checked
+                )
               }
               className="mt-1 h-4 w-4 accent-sky-400"
             />
@@ -381,8 +511,8 @@ export default function AddProjectForm() {
               </span>
 
               <span className="mt-1 block text-sm text-[var(--color-text-secondary)]">
-                Add the problem, your contribution, and
-                the outcome of the project.
+                Add the problem, your contribution,
+                and the outcome of the project.
               </span>
             </div>
           </label>
@@ -478,7 +608,9 @@ export default function AddProjectForm() {
                 <button
                   type="button"
                   onClick={() =>
-                    removeTechnology(technology)
+                    removeTechnology(
+                      technology
+                    )
                   }
                   aria-label={`Remove ${technology}`}
                   className="text-sky-300 transition-colors hover:text-white"
@@ -577,7 +709,7 @@ export default function AddProjectForm() {
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
               {gallery.map((image, index) => (
                 <div
-                  key={image}
+                  key={`${image}-${index}`}
                   className="group relative overflow-hidden rounded-[20px] border border-[var(--color-border)] bg-[var(--color-background)]"
                 >
                   <img
@@ -632,7 +764,9 @@ export default function AddProjectForm() {
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--color-border)] pt-6 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={() => router.push("/projects")}
+          onClick={() =>
+            router.push("/projects")
+          }
           className="rounded-[20px] border border-[var(--color-border)] px-6 py-3 font-medium text-gray-400 transition-colors hover:border-white/20 hover:bg-white/5 hover:text-white"
         >
           Cancel
@@ -642,7 +776,9 @@ export default function AddProjectForm() {
           type="submit"
           className="rounded-[20px] bg-[var(--color-primary)] px-6 py-3 font-medium text-[var(--color-background)] transition-all duration-300 hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_20px_rgba(135,206,235,0.2)]"
         >
-          Add Project
+          {project
+            ? "Save Changes"
+            : "Add Project"}
         </button>
       </div>
     </form>

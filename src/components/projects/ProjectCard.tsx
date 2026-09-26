@@ -55,6 +55,30 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </button>
       )}
 
+      {/* Edit Button - Admin Only */}
+      {isAdmin && (
+        <Link
+          href={`/projects/${project.id}/edit`}
+          onClick={(event) => event.stopPropagation()}
+          className="absolute right-16 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-black/70 text-sky-400 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-sky-400/40 hover:bg-sky-500 hover:text-white"
+          aria-label={`Edit ${project.name}`}
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-8.5a2.121 2.121 0 013 3L12 14l-4 1 1-4 8.5-8.5z"
+            />
+          </svg>
+        </Link>
+      )}
+
       <Link
         href={`/projects/${project.id}`}
         className="block h-full"

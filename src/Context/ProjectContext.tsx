@@ -29,6 +29,10 @@ export type Project = {
 type ProjectContextType = {
   projects: Project[];
   addProject: (project: Omit<Project, "id">) => Promise<void>;
+  updateProject: (
+    id: string,
+    project: Omit<Project, "id">
+  ) => Promise<void>;
   removeProject: (id: string) => Promise<void>;
   isLoading: boolean;
 };
@@ -106,30 +110,30 @@ export const ProjectProvider = ({
   };
 
   const createUniqueSlug = async (name: string) => {
-  const baseSlug = createSlug(name);
+    const baseSlug = createSlug(name);
 
-  let slug = baseSlug;
-  let counter = 2;
+    let slug = baseSlug;
+    let counter = 2;
 
-  while (true) {
-    const { data, error } = await supabase
-      .from("projects")
-      .select("slug")
-      .eq("slug", slug)
-      .maybeSingle();
+    while (true) {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("slug")
+        .eq("slug", slug)
+        .maybeSingle();
 
-    if (error) {
-      throw error;
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        return slug;
+      }
+
+      slug = `${baseSlug}-${counter}`;
+      counter += 1;
     }
-
-    if (!data) {
-      return slug;
-    }
-
-    slug = `${baseSlug}-${counter}`;
-    counter += 1;
-  }
-};
+  };
 
   /*
    * Add new project to Supabase
@@ -181,6 +185,47 @@ export const ProjectProvider = ({
   };
 
   /*
+   * Update existing project in Supabase
+   */
+  const updateProject = async (
+    id: string,
+    updatedProjectData: Omit<Project, "id">
+  ) => {
+    const { data, error } = await supabase
+      .from("projects")
+      .update({
+        title: updatedProjectData.name,
+        type: updatedProjectData.type,
+        category: updatedProjectData.category,
+        tags: updatedProjectData.tags ?? [],
+        description: updatedProjectData.description,
+        problem: updatedProjectData.problem ?? null,
+        what_i_did: updatedProjectData.whatIDid ?? null,
+        what_came_of_it: updatedProjectData.whatCameOfIt ?? null,
+        technologies: updatedProjectData.technologies ?? [],
+        github_url: updatedProjectData.githubUrl ?? "",
+        cover_image: updatedProjectData.coverImage ?? "",
+        gallery_images: updatedProjectData.images ?? [],
+      })
+      .eq("slug", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to update project:", error);
+      throw error;
+    }
+
+    const updatedProject = mapSupabaseProject(data);
+
+    setProjectsList((currentProjects) =>
+      currentProjects.map((project) =>
+        project.id === id ? updatedProject : project
+      )
+    );
+  };
+
+  /*
    * Delete project from Supabase
    *
    * The UI uses slug as the project id,
@@ -207,6 +252,7 @@ export const ProjectProvider = ({
       value={{
         projects: projectsList,
         addProject,
+        updateProject,
         removeProject,
         isLoading,
       }}
