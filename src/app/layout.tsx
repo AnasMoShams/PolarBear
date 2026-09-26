@@ -3,7 +3,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 import Navbar from "@/components/layout/Navbar";
+
 import { ProjectProvider } from "@/context/ProjectContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "PolarBear",
@@ -18,10 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ProjectProvider>
-          <Navbar />
-          {children}
-        </ProjectProvider>
+        <AuthProvider>
+          <ProjectProvider>
+            <Navbar />
+            {children}
+          </ProjectProvider>
+        </AuthProvider>
       </body>
     </html>
   );
