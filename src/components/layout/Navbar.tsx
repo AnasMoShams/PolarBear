@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -13,10 +14,11 @@ import MobileMenu from "./MobileMenu";
 import LogoutButton from "@/components/auth/LogoutButton";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { isAdmin } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-md">
+    <header className="absolute top-0 left-0 z-50 w-full bg-transparent">
       <Container className="flex h-20 items-center justify-between">
         <Link
           href="/"
@@ -35,7 +37,11 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-sm font-medium text-white transition-colors duration-300 hover:text-[var(--color-primary)]"
+                className={`relative text-sm font-medium transition-colors duration-300 ${
+                  pathname === item.href
+                    ? "text-sky-400 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-sky-400"
+                    : "text-white hover:text-sky-400"
+                }`}
               >
                 {item.label}
               </Link>
