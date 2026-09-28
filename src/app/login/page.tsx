@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/projects";
@@ -19,10 +19,11 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (signInError) {
       setError(signInError.message);
@@ -51,6 +52,7 @@ export default function LoginPage() {
           <label htmlFor="email" className="text-sm font-medium">
             Email
           </label>
+
           <input
             id="email"
             type="email"
@@ -66,6 +68,7 @@ export default function LoginPage() {
           <label htmlFor="password" className="text-sm font-medium">
             Password
           </label>
+
           <input
             id="password"
             type="password"
@@ -77,7 +80,11 @@ export default function LoginPage() {
           />
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-400">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -88,5 +95,21 @@ export default function LoginPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center px-4 py-24">
+          <div className="text-sm text-gray-400">
+            Loading...
+          </div>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
