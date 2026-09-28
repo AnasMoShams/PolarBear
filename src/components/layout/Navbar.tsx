@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+
 import { useAuth } from "@/context/AuthContext";
 
 import Container from "@/components/layout/Container";
-import Button from "@/components/ui/Button";
+
 import { navigation } from "@/constants/navigation";
+
 import MobileMenu from "./MobileMenu";
+
 import LogoutButton from "@/components/auth/LogoutButton";
 
 export default function Navbar() {
@@ -41,10 +44,6 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:block">
-            <Button variant="outline">Resume</Button>
-          </div>
-
           <div className="hidden md:block">
             <LogoutButton />
           </div>
