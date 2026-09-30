@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -20,6 +20,53 @@ export default function ProjectDetailsPage({
   const { projects, isLoading } = useProjects();
 
   const project = projects.find((p) => p.id === id);
+
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (selectedImageIndex === null || !project) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedImageIndex(null);
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        setSelectedImageIndex((current) => {
+          if (current === null || current === 0) {
+            return current;
+          }
+
+          return current - 1;
+        });
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        setSelectedImageIndex((current) => {
+          if (
+            current === null ||
+            current === project.images.length - 1
+          ) {
+            return current;
+          }
+
+          return current + 1;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedImageIndex, project]);
 
   if (isLoading) {
     return (
@@ -173,24 +220,33 @@ export default function ProjectDetailsPage({
                       index === project.images.length - 1;
 
                     return (
-                      <div
+                      <button
                         key={index}
-                        className={`relative aspect-video w-full overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-300 hover:scale-[1.02] ${
+                        type="button"
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`group relative aspect-video w-full overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-300 hover:scale-[1.02] ${
                           isLastOdd
                             ? "md:col-span-2 md:mx-auto md:w-1/2"
                             : ""
                         }`}
+                        aria-label={`Open ${project.name} screenshot ${
+                          index + 1
+                        }`}
                       >
                         <Image
                           src={image}
-                          alt={`${project.name} screenshot ${
-                            index + 1
-                          }`}
+                          alt={`${project.name} screenshot ${index + 1}`}
                           fill
-                          className="object-cover"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                           sizes="(max-width: 768px) 100vw, 50vw"
                         />
-                      </div>
+
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20">
+                          <span className="rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            View Image
+                          </span>
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -250,7 +306,7 @@ export default function ProjectDetailsPage({
                       viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.699-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.699-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
                     </svg>
                   </a>
                 </div>
@@ -259,7 +315,81 @@ export default function ProjectDetailsPage({
           </aside>
         </div>
       </article>
+
+      {/* Image Lightbox */}
+      {selectedImageIndex !== null && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedImageIndex(null)}
+        >
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setSelectedImageIndex(null)}
+            className="absolute right-6 top-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition-colors hover:bg-white/20"
+            aria-label="Close image"
+          >
+            ×
+          </button>
+
+          {/* Previous Button */}
+          {selectedImageIndex > 0 && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+
+                setSelectedImageIndex((current) =>
+                  current !== null ? current - 1 : null
+                );
+              }}
+              className="absolute left-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition-colors hover:bg-white/20 md:left-8"
+              aria-label="Previous image"
+            >
+              ‹
+            </button>
+          )}
+
+          {/* Next Button */}
+          {selectedImageIndex < project.images.length - 1 && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+
+                setSelectedImageIndex((current) =>
+                  current !== null ? current + 1 : null
+                );
+              }}
+              className="absolute right-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition-colors hover:bg-white/20 md:right-8"
+              aria-label="Next image"
+            >
+              ›
+            </button>
+          )}
+
+          {/* Image */}
+          <div
+            className="relative h-[85vh] w-full max-w-6xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              src={project.images[selectedImageIndex]}
+              alt={`${project.name} screenshot ${
+                selectedImageIndex + 1
+              }`}
+              fill
+              className="object-contain"
+              sizes="90vw"
+            />
+          </div>
+
+          {/* Image Counter */}
+          <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-md">
+            {selectedImageIndex + 1} / {project.images.length}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
-  
